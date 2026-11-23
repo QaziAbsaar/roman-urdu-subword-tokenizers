@@ -3,8 +3,14 @@
 *.out
 *.toc
 *.synctex.gz
+__pycache__/
 .ipynb_checkpoints/
 .venv/
 data/
 CLAUDE.md
 .claude/
+__pycache__/
+graphify-out/cache/
+graphify-out/.graphify_python
+graphify-out/.graphify_root
+graphify-out/cost.json
