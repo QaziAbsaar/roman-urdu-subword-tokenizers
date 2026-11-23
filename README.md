@@ -70,6 +70,19 @@ This variation makes the vocabulary large and sparse, so word-level models see m
 - Neither algorithm groups spelling variants. Frequent variants (`nahi`, `nahin`, `nai`, `nhi`) each become separate whole tokens.
 - From 4k upward, all tokenizers match the word-level baseline on sentiment classification.
 
+### Better sentiment classifier
+
+The classifier above is kept simple on purpose. `classifiers.py` tests stronger ones on the same split:
+
+| Model | 3-class accuracy | Positive/negative accuracy |
+|-------|------------------|----------------------------|
+| Word unigrams + Logistic Regression (baseline) | 64.78% | 78.04% |
+| Word 1-2 grams + LinearSVC | 65.96% | 79.80% |
+| Character 2-5 grams + LinearSVC | 66.24% | 80.07% |
+| **Word 1-2 + character 2-5 grams + LinearSVC** | **67.93%** | **80.70%** |
+
+Character n-grams help because spelling variants like `kya` and `kia` share letters. The 3-class task stays under 70% because neutral overlaps both sides and many dataset labels are noisy.
+
 Full tables, 8k results and plots are in `results/`, `results.ipynb` and `report.pdf`.
 
 ## How to Run
@@ -79,6 +92,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 python test_run.py     # quick checks of the metric functions
+python classifiers.py  # compares sentiment classifiers, writes results/classifiers.csv
 python run.py          # downloads data, trains 8 tokenizers, writes results/ (about 2 minutes on CPU)
 jupyter notebook results.ipynb
 ```
@@ -89,7 +103,7 @@ jupyter notebook results.ipynb
 python demo.py         # needs run.py results; trains 8 small classifiers (~20 s), then serves the page
 ```
 
-Open http://localhost:8000, type a Roman Urdu sentence and see how BPE and WordPiece cut it at each vocabulary size, with the predicted sentiment.
+Open http://localhost:8000, type a Roman Urdu sentence and see how BPE and WordPiece cut it at each vocabulary size. The best classifier gives a positive/negative verdict (about 81% accurate) and a 3-class verdict (about 68%).
 
 Build the documents with `pdflatex proposal.tex` and `pdflatex report.tex` (run twice).
 
@@ -100,6 +114,7 @@ Note: WordPiece training in the `tokenizers` library is not fully deterministic,
 ```
 .
 ├── run.py            # Full pipeline: data, tokenizers, metrics, plots
+├── classifiers.py    # Stronger sentiment classifiers (3-class and 2-class)
 ├── test_run.py       # Sanity checks for the metric functions
 ├── results.ipynb     # Results tables, plots and example tokenizations
 ├── demo.py / demo.html  # Interactive tokenizer demo (http://localhost:8000)
