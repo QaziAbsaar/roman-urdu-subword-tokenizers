@@ -50,11 +50,37 @@ def clean(text):
     return re.sub(r"\s+", " ", text).strip()
 
 
+# ---------------- tokenizers ----------------
+def train_tokenizer(algo, vocab_size, texts):
+    if algo == "BPE":
+        tok = Tokenizer(models.BPE(unk_token="[UNK]"))
+        trainer = trainers.BpeTrainer(vocab_size=vocab_size, special_tokens=["[UNK]"])
+    else:
+        tok = Tokenizer(models.WordPiece(unk_token="[UNK]"))
+        trainer = trainers.WordPieceTrainer(vocab_size=vocab_size, special_tokens=["[UNK]"])
+    tok.pre_tokenizer = pre_tokenizers.Whitespace()
+    tok.train_from_iterator(texts, trainer)
+    return tok
+
+
+def strip_prefix(token):
+    return token[2:] if token.startswith("##") else token
+
+
 def main():
+    OUT.mkdir(exist_ok=True)
+    (OUT / "tokenizers").mkdir(exist_ok=True)
+
     df = load_data()
     train, test = train_test_split(df, test_size=0.2, stratify=df["label"], random_state=SEED)
     print(f"Sentences: {len(df)} (train {len(train)}, test {len(test)})")
     print(df["label"].value_counts().to_string())
+
+    for algo in ["BPE", "WordPiece"]:
+        for size in VOCAB_SIZES:
+            tok = train_tokenizer(algo, size, train["text"].tolist())
+            tok.save(str(OUT / "tokenizers" / f"{algo.lower()}_{size}.json"))
+            print(f"done {algo} {size}")
 
 
 if __name__ == "__main__":
