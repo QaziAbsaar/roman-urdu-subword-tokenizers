@@ -46,7 +46,7 @@ Pak-Austria Fachhochschule: Institute of Applied Sciences and Technology\par}
 \end{titlepage}
 
 \begin{abstract}
-Roman Urdu has no standard spelling, so one word appears in many written forms. We compare two subword tokenization algorithms, Byte-Pair Encoding (BPE) and WordPiece, on 19{,}489 Roman Urdu social media sentences. We train each algorithm at four vocabulary sizes (1k, 4k, 8k and 16k) and measure unknown-token rate, fertility, spelling-variant consistency and downstream sentiment classification performance. BPE produces slightly fewer tokens per word than WordPiece at every vocabulary size. Neither algorithm produces unknown tokens on the cleaned text. Both algorithms split spelling variants inconsistently, and consistency falls as the vocabulary grows, because frequent variants become separate whole-word tokens. Downstream, the best subword tokenizers (WordPiece-4k: 63.37 macro F1; BPE-16k: 63.26) perform about the same as a plain word-level baseline (63.13). For Roman Urdu, the choice between BPE and WordPiece matters less than the vocabulary size, and subword tokenization alone does not solve spelling variation.
+Roman Urdu has no standard spelling, so one word appears in many written forms. We compare two subword tokenization algorithms, Byte-Pair Encoding (BPE) and WordPiece, on 19{,}489 Roman Urdu social media sentences. We train each algorithm at four vocabulary sizes (1k, 4k, 8k and 16k) and measure unknown-token rate, fertility, spelling-variant consistency and downstream sentiment classification performance. BPE produces slightly fewer tokens per word than WordPiece at every vocabulary size. Neither algorithm produces unknown tokens on the cleaned text. Both algorithms split spelling variants inconsistently, and consistency falls as the vocabulary grows, because frequent variants become separate whole-word tokens. Downstream, the best subword tokenizers (WordPiece-4k: 63.37 macro F1; BPE-16k: 63.26) perform about the same as a plain word-level baseline (63.13). For Roman Urdu, the choice between BPE and WordPiece matters less than the vocabulary size, and subword tokenization alone does not solve spelling variation. A stronger classifier that combines word and character n-grams reaches 67.93\% accuracy on the 3-class task and 80.70\% on positive vs.\ negative.
 \end{abstract}
 
 \section{Introduction}
@@ -203,6 +203,29 @@ Word-level baseline & -- & 64.78 & 63.13 \\
 \label{fig:f1}
 \end{figure}
 
+\subsection{Improving the Sentiment Classifier}
+The downstream classifier above is deliberately simple, so that the tokenizer is the only variable. To see how much better sentiment prediction can get on this data, we compared stronger classical models on the same split. We used word 1--2 grams, character 2--5 grams (inside word boundaries) and a linear support vector machine (LinearSVC). Character n-grams help with Roman Urdu because spelling variants such as \textit{kya}, \textit{kia} and \textit{kyaa} share many characters even when they share no tokens. We also ran a 2-class task with only positive and negative sentences (11{,}061 sentences), because the neutral class overlaps with both. Table~\ref{tab:classifiers} shows the results.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+ & \multicolumn{2}{c}{\textbf{3-class}} & \multicolumn{2}{c}{\textbf{2-class}} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+\textbf{Model} & \textbf{Acc.} & \textbf{F1} & \textbf{Acc.} & \textbf{F1} \\
+\midrule
+Word unigrams + Logistic Regression (baseline) & 64.78 & 63.13 & 78.04 & 78.01 \\
+Word 1--2 grams + LinearSVC & 65.96 & 65.11 & 79.80 & 79.78 \\
+Character 2--5 grams + LinearSVC & 66.24 & 64.95 & 80.07 & 80.05 \\
+Word 1--2 + character 2--5 grams + LinearSVC & \textbf{67.93} & \textbf{66.79} & \textbf{80.70} & \textbf{80.68} \\
+\bottomrule
+\end{tabular}
+\caption{Accuracy and macro F1 (\%) of stronger classifiers on the test split. Full results are in \texttt{results/classifiers.csv}.}
+\label{tab:classifiers}
+\end{table}
+
+Combining word and character n-grams gives the best result on both tasks: 67.93\% accuracy with three classes (+3.15 points over the baseline) and 80.70\% with two classes. The 3-class task stays below 70\% for two reasons. The neutral class overlaps with both positive and negative, and many labels in the dataset are noisy: for example, a political complaint is labeled positive and a prayer for a happy life is labeled negative. All of these models count n-grams without full word order, so some negations are still missed (\textit{acha nahi tha}, ``it was not good'', is still predicted positive).
+
 \section{Discussion}
 \textbf{RQ1 (unknown tokens and fertility).} Neither algorithm produced unknown tokens. After cleaning, the text contains only ASCII characters, and every character appears in the training data, so any word can be built from known pieces. BPE has lower fertility than WordPiece at every vocabulary size (for example 1.685 vs.\ 1.807 at 1k and 1.127 vs.\ 1.142 at 16k). BPE also splits fewer words and produces longer tokens. The gap is largest at small vocabulary sizes and almost disappears at 16k.
 
@@ -215,7 +238,7 @@ Word-level baseline & -- & 64.78 & 63.13 \\
 \textbf{Limitations.} We use one dataset, one random split and a simple linear classifier. The spelling-variant list is small and hand-made. WordPiece training in the \texttt{tokenizers} library is not fully deterministic: repeated runs change its macro F1 by up to about 0.15 points. BPE training gives identical results on every run. Results with transformer models may differ.
 
 \section{Conclusion}
-On Roman Urdu, BPE gives slightly less fragmented tokenization than WordPiece, but the difference is small compared with the effect of vocabulary size. A vocabulary of 4k to 8k tokens is a good choice: it reaches baseline-level downstream performance with a compact vocabulary. Neither algorithm groups spelling variants, so Roman Urdu pipelines should combine subword tokenization with a spelling normalization step. Future work could test transformer models, more datasets and normalization before tokenization.
+On Roman Urdu, BPE gives slightly less fragmented tokenization than WordPiece, but the difference is small compared with the effect of vocabulary size. A vocabulary of 4k to 8k tokens is a good choice: it reaches baseline-level downstream performance with a compact vocabulary. Neither algorithm groups spelling variants, so Roman Urdu pipelines should combine subword tokenization with a spelling normalization step. For sentiment classification, character n-grams are a cheap way to make a model robust to spelling variation: combined with word n-grams they reach 80.70\% accuracy on positive vs.\ negative. Future work could test transformer models, more datasets and normalization before tokenization.
 
 All code and results are available at:\\ \url{https://github.com/QaziAbsaar/roman-urdu-subword-tokenizers}.
 
