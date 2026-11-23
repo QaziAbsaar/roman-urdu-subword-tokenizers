@@ -81,6 +81,15 @@ h1 {
 }
 .examples button:hover { border-color: var(--ink); }
 
+/* verdict */
+.verdict { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 3rem 0 0; }
+.verdict:empty { display: none; }
+.verdict h2 { font-size: 1rem; font-weight: 500; color: var(--muted); margin: 0 0 0.35rem; }
+.verdict .label { font-weight: 800; font-size: clamp(2rem, 4.5vw, 3rem); line-height: 1; letter-spacing: -0.03em; margin: 0 0 0.5rem; }
+.verdict p { margin: 0; color: var(--muted); font-size: 0.9375rem; max-width: 34ch; }
+.verdict .main { border-left: 4px solid var(--ink); padding-left: 1rem; }
+.verdict .side { border-left: 4px solid var(--line); padding-left: 1rem; }
+
 /* legend */
 .legend { display: flex; flex-wrap: wrap; gap: 1.5rem; margin: 3rem 0 1rem; color: var(--muted); font-size: 0.9375rem; }
 .legend i { display: inline-block; width: 0.9rem; height: 0.9rem; border-radius: 3px; vertical-align: -0.1rem; margin-right: 0.4rem; }
@@ -136,6 +145,7 @@ h1 {
   .page { padding: 2rem 1rem 3rem; }
   .matrix { grid-template-columns: 1fr; }
   .colhead { display: none; }
+  .verdict { grid-template-columns: 1fr; gap: 1.5rem; }
   .cell { padding-left: 0; padding-right: 0; }
   .ask input { font-size: 1.05rem; }
   .rowhead { border-bottom: none; padding-bottom: 0; display: flex; gap: 0.6rem; align-items: baseline; }
@@ -152,7 +162,7 @@ h1 {
 <body>
 <main class="page">
   <h1>Roman Urdu, cut two ways</h1>
-  <p class="lede">Type a sentence the way you would text it. Each row shows how BPE and WordPiece split it into pieces at a different vocabulary size, and what sentiment a classifier trained on those pieces predicts.</p>
+  <p class="lede">Type a sentence the way you would text it. Each row shows how BPE and WordPiece split it into pieces at a different vocabulary size, and what sentiment a simple classifier trained on those pieces predicts. The verdict above the grid comes from our best classifier.</p>
 
   <form class="ask" onsubmit="return false">
     <label for="text">Your sentence</label>
@@ -169,6 +179,8 @@ h1 {
     <button type="button">bohot bura service tha</button>
   </div>
 
+  <section class="verdict" id="verdict" aria-live="polite"></section>
+
   <div class="legend" aria-hidden="true">
     <span><i class="k-cut"></i>Cut inside a word</span>
   </div>
@@ -183,6 +195,7 @@ h1 {
 <script>
 const input = document.getElementById("text");
 const matrix = document.getElementById("matrix");
+const verdict = document.getElementById("verdict");
 let timer, latest = 0;
 
 document.querySelectorAll(".examples button").forEach(b =>
@@ -211,7 +224,21 @@ async function run() {
   if (id === latest) render(data);
 }
 
+function renderVerdict(v) {
+  if (!v["2-class"]) { verdict.replaceChildren(); return; }
+  const block = (cls, title, task, note) => {
+    const d = el("div", cls);
+    d.append(el("h2", "", title), el("div", "label", v[task].label),
+             el("p", "", `${note}, ${Math.round(v[task].accuracy)}% accurate on comments it has not seen.`));
+    return d;
+  };
+  verdict.replaceChildren(
+    block("main", "Positive or negative", "2-class", "Best model"),
+    block("side", "With neutral as a third option", "3-class", "Same model"));
+}
+
 function render(data) {
+  renderVerdict(data.verdicts);
   if (!data.text) {
     matrix.replaceChildren(el("div", "note", "Type a sentence above to see how each tokenizer cuts it."));
     return;
