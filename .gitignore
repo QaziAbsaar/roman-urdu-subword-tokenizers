@@ -17,3 +17,5 @@ graphify-out/cost.json
 proposal.tex
 proposal.pdf
 proposals.docx
+graphify-out/20*/
+graphify-out/.graphify_analysis.json
