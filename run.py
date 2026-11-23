@@ -67,6 +67,25 @@ def strip_prefix(token):
     return token[2:] if token.startswith("##") else token
 
 
+# ---------------- metrics ----------------
+def intrinsic(tok, texts):
+    """UNK rate, fertility, % continued words and chars per token over texts."""
+    n_tokens = n_unk = n_words = n_continued = n_chars = 0
+    for enc in tok.encode_batch(texts):
+        n_tokens += len(enc.tokens)
+        n_unk += enc.tokens.count("[UNK]")
+        per_word = Counter(w for w in enc.word_ids if w is not None)
+        n_words += len(per_word)
+        n_continued += sum(1 for c in per_word.values() if c >= 2)
+        n_chars += sum(len(strip_prefix(t)) if t != "[UNK]" else 1 for t in enc.tokens)
+    return {
+        "unk_rate": 100 * n_unk / n_tokens,
+        "fertility": n_tokens / n_words,
+        "continued_words": 100 * n_continued / n_words,
+        "chars_per_token": n_chars / n_tokens,
+    }
+
+
 def main():
     OUT.mkdir(exist_ok=True)
     (OUT / "tokenizers").mkdir(exist_ok=True)
@@ -76,11 +95,18 @@ def main():
     print(f"Sentences: {len(df)} (train {len(train)}, test {len(test)})")
     print(df["label"].value_counts().to_string())
 
+    metrics = []
     for algo in ["BPE", "WordPiece"]:
         for size in VOCAB_SIZES:
             tok = train_tokenizer(algo, size, train["text"].tolist())
             tok.save(str(OUT / "tokenizers" / f"{algo.lower()}_{size}.json"))
+            row = {"algorithm": algo, "vocab_size": size}
+            metrics.append({**row, **intrinsic(tok, test["text"].tolist())})
             print(f"done {algo} {size}")
+
+    metrics = pd.DataFrame(metrics)
+    metrics.round(3).to_csv(OUT / "metrics.csv", index=False)
+    print("\nIntrinsic metrics:\n", metrics.round(3).to_string(index=False))
 
 
 if __name__ == "__main__":
