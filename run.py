@@ -28,6 +28,28 @@ OUT = Path("results")
 VOCAB_SIZES = [1000, 4000, 8000, 16000]
 SEED = 42
 
+# Common Roman Urdu words and their spelling variants (same meaning, different spelling).
+VARIANTS = {
+    "what": ["kya", "kia", "kyaa"],
+    "no": ["nahi", "nahin", "nai", "nhi"],
+    "is": ["hai", "hay", "hy"],
+    "good": ["acha", "achha", "achaa"],
+    "good (f)": ["achi", "achhi", "achchi"],
+    "very": ["bohat", "bahut", "bohot", "boht"],
+    "me": ["mujhe", "mujhay", "mjhe"],
+    "why": ["kyun", "kyon", "kiun"],
+    "friend": ["yaar", "yar", "yaarr"],
+    "fine": ["theek", "thik", "theak"],
+    "brother": ["bhai", "bhae", "bhaee"],
+    "pakistan": ["pakistan", "pakstan", "pakistaan"],
+    "life": ["zindagi", "zindgi", "zindagee"],
+    "happy": ["khush", "khus", "kush"],
+    "god": ["allah", "alla", "allaah"],
+    "thanks": ["shukriya", "shukria", "shukriyah"],
+}
+
+
+
 # ---------------- data ----------------
 def load_data():
     if not DATA_ZIP.exists():
@@ -86,6 +108,18 @@ def intrinsic(tok, texts):
     }
 
 
+def jaccard(a, b):
+    a, b = set(a), set(b)
+    return len(a & b) / len(a | b) if a | b else 1.0
+
+
+def variant_consistency(tok, words):
+    """Mean pairwise Jaccard similarity of the token sets of spelling variants."""
+    pieces = [[strip_prefix(t) for t in tok.encode(w).tokens] for w in words]
+    pairs = list(itertools.combinations(pieces, 2))
+    return sum(jaccard(a, b) for a, b in pairs) / len(pairs)
+
+
 def main():
     OUT.mkdir(exist_ok=True)
     (OUT / "tokenizers").mkdir(exist_ok=True)
@@ -95,18 +129,25 @@ def main():
     print(f"Sentences: {len(df)} (train {len(train)}, test {len(test)})")
     print(df["label"].value_counts().to_string())
 
-    metrics = []
+    metrics, variants = [], []
     for algo in ["BPE", "WordPiece"]:
         for size in VOCAB_SIZES:
             tok = train_tokenizer(algo, size, train["text"].tolist())
             tok.save(str(OUT / "tokenizers" / f"{algo.lower()}_{size}.json"))
             row = {"algorithm": algo, "vocab_size": size}
             metrics.append({**row, **intrinsic(tok, test["text"].tolist())})
+
+            scores = {name: variant_consistency(tok, words) for name, words in VARIANTS.items()}
+            variants.append({**row, **scores, "mean": sum(scores.values()) / len(scores)})
             print(f"done {algo} {size}")
 
     metrics = pd.DataFrame(metrics)
     metrics.round(3).to_csv(OUT / "metrics.csv", index=False)
+    variants = pd.DataFrame(variants)
+    variants.round(3).to_csv(OUT / "variants.csv", index=False)
     print("\nIntrinsic metrics:\n", metrics.round(3).to_string(index=False))
+    print("\nVariant consistency (mean):\n",
+          variants[["algorithm", "vocab_size", "mean"]].round(3).to_string(index=False))
 
 
 if __name__ == "__main__":
