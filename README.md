@@ -83,6 +83,14 @@ python run.py          # downloads data, trains 8 tokenizers, writes results/ (a
 jupyter notebook results.ipynb
 ```
 
+### Interactive demo
+
+```bash
+python demo.py         # needs run.py results; trains 8 small classifiers (~20 s), then serves the page
+```
+
+Open http://localhost:8000, type a Roman Urdu sentence and see how BPE and WordPiece cut it at each vocabulary size, with the predicted sentiment.
+
 Build the documents with `pdflatex proposal.tex` and `pdflatex report.tex` (run twice).
 
 Note: WordPiece training in the `tokenizers` library is not fully deterministic, so WordPiece numbers can change slightly between runs. BPE results are identical on every run.
@@ -94,6 +102,7 @@ Note: WordPiece training in the `tokenizers` library is not fully deterministic,
 ├── run.py            # Full pipeline: data, tokenizers, metrics, plots
 ├── test_run.py       # Sanity checks for the metric functions
 ├── results.ipynb     # Results tables, plots and example tokenizations
+├── demo.py / demo.html  # Interactive tokenizer demo (http://localhost:8000)
 ├── requirements.txt
 ├── results/          # metrics.csv, variants.csv, downstream.csv, plots, trained tokenizers
 ├── proposal.tex/pdf  # Project proposal
