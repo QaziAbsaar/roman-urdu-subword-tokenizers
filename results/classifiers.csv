@@ -1,0 +1,9 @@
+task,model,accuracy,macro_f1
+3-class,Word unigrams + Logistic Regression (baseline),64.78,63.13
+3-class,Word 1-2 grams + LinearSVC,65.96,65.11
+3-class,Character 2-5 grams + LinearSVC,66.24,64.95
+3-class,Word 1-2 + character 2-5 grams + LinearSVC,67.93,66.79
+2-class,Word unigrams + Logistic Regression (baseline),78.04,78.01
+2-class,Word 1-2 grams + LinearSVC,79.8,79.78
+2-class,Character 2-5 grams + LinearSVC,80.07,80.05
+2-class,Word 1-2 + character 2-5 grams + LinearSVC,80.7,80.68
