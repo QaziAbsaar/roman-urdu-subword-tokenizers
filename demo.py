@@ -6,11 +6,13 @@ import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from tokenizers import Tokenizer
 
+from classifiers import best_model, split, tasks
 from run import OUT, SEED, VOCAB_SIZES, clean, load_data
 
 PAGE = Path(__file__).with_name("demo.html").read_bytes()
@@ -21,9 +23,8 @@ def identity(tokens):
     return tokens
 
 
-def build_models():
+def build_models(df):
     """Load the saved tokenizers and train one sentiment classifier per tokenizer (same split as run.py)."""
-    df = load_data()
     train, _ = train_test_split(df, test_size=0.2, stratify=df["label"], random_state=SEED)
     texts = train["text"].tolist()
     models = {}
@@ -37,8 +38,23 @@ def build_models():
     return models
 
 
-def analyze(models, text):
+def build_best(df):
+    """Train the best classifier from classifiers.py for both tasks; accuracy comes from its results CSV."""
+    scores = pd.read_csv(OUT / "classifiers.csv")
+    best = {}
+    for task, data in tasks(df).items():
+        train, _ = split(data)
+        model = best_model().fit(train["text"], train["label"])
+        accuracy = scores[(scores["task"] == task) & scores["model"].str.startswith("Word 1-2 + character")]
+        best[task] = (model, float(accuracy["accuracy"].iloc[0]))
+        print(f"ready best {task}")
+    return best
+
+
+def analyze(models, best, text):
     text = clean(text)
+    verdicts = {task: {"label": model.predict([text])[0], "accuracy": acc}
+                for task, (model, acc) in best.items()} if text else {}
     results = []
     for name, (tok, vec, clf) in models.items():
         enc = tok.encode(text)
@@ -54,7 +70,8 @@ def analyze(models, text):
             "pieces": len(enc.tokens),
             "sentiment": {label: round(float(p), 3) for label, p in zip(clf.classes_, probs)},
         })
-    return {"text": text, "n_words": len(results[0]["words"]) if text else 0, "results": results}
+    return {"text": text, "n_words": len(results[0]["words"]) if text else 0,
+            "verdicts": verdicts, "results": results}
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -69,7 +86,7 @@ class Handler(BaseHTTPRequestHandler):
             text = str(json.loads(self.rfile.read(length) or b"{}").get("text", ""))[:500]
         except json.JSONDecodeError:
             return self.reply(400, "text/plain", b"bad json")
-        body = json.dumps(analyze(self.server.models, text)).encode()
+        body = json.dumps(analyze(self.server.models, self.server.best, text)).encode()
         self.reply(200, "application/json", body)
 
     def reply(self, code, content_type, body):
@@ -85,6 +102,8 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     server = ThreadingHTTPServer(("127.0.0.1", 8000), Handler)
-    server.models = build_models()
+    df = load_data()
+    server.models = build_models(df)
+    server.best = build_best(df)
     print("Demo running at http://localhost:8000  (Ctrl+C to stop)")
     server.serve_forever()
