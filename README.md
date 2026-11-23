@@ -53,33 +53,64 @@ This variation makes the vocabulary large and sparse, so word-level models see m
 - `pandas`, `scikit-learn`, `matplotlib`
 - Jupyter Notebook (no GPU needed)
 
+## Key Results
+
+| Tokenizer | Fertility | Words split (%) | Variant consistency | Macro F1 (%) |
+|-----------|-----------|-----------------|---------------------|--------------|
+| BPE 1k | 1.685 | 43.33 | 0.10 | 58.95 |
+| BPE 4k | 1.319 | 23.59 | 0.07 | 63.01 |
+| BPE 16k | 1.127 | 10.31 | 0.05 | 63.26 |
+| WordPiece 1k | 1.807 | 47.44 | 0.14 | 58.98 |
+| WordPiece 4k | 1.365 | 25.97 | 0.07 | 63.37 |
+| WordPiece 16k | 1.142 | 11.41 | 0.06 | 62.63 |
+| Word-level baseline | – | – | – | 63.13 |
+
+- BPE fragments words slightly less than WordPiece at every vocabulary size.
+- Vocabulary size matters much more than the algorithm.
+- Neither algorithm groups spelling variants. Frequent variants (`nahi`, `nahin`, `nai`, `nhi`) each become separate whole tokens.
+- From 4k upward, all tokenizers match the word-level baseline on sentiment classification.
+
+Full tables, 8k results and plots are in `results/`, `results.ipynb` and `report.pdf`.
+
+## How to Run
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python test_run.py     # quick checks of the metric functions
+python run.py          # downloads data, trains 8 tokenizers, writes results/ (about 2 minutes on CPU)
+jupyter notebook results.ipynb
+```
+
+Build the documents with `pdflatex proposal.tex` and `pdflatex report.tex` (run twice).
+
+Note: WordPiece training in the `tokenizers` library is not fully deterministic, so WordPiece numbers can change slightly between runs. BPE results are identical on every run.
+
 ## Repository Structure
 
 ```
 .
-├── proposal.tex      # Project proposal (LaTeX source)
-├── proposal.pdf      # Project proposal (compiled)
+├── run.py            # Full pipeline: data, tokenizers, metrics, plots
+├── test_run.py       # Sanity checks for the metric functions
+├── results.ipynb     # Results tables, plots and example tokenizations
+├── requirements.txt
+├── results/          # metrics.csv, variants.csv, downstream.csv, plots, trained tokenizers
+├── proposal.tex/pdf  # Project proposal
+├── report.tex/pdf    # Final report
 ├── logo_full.png     # University logo
-└── README.md
-```
-
-Code, data and results folders will be added as the project progresses.
-
-## Building the Proposal
-
-```bash
-pdflatex proposal.tex
+└── data/             # Dataset, downloaded by run.py (not committed)
 ```
 
 ## Project Status
 
 - [x] Project proposal
-- [ ] Data download and preprocessing
-- [ ] Tokenizer training
-- [ ] Intrinsic evaluation
-- [ ] Spelling-variant analysis
-- [ ] Downstream classification
-- [ ] Final report
+- [x] Data download and preprocessing
+- [x] Tokenizer training
+- [x] Intrinsic evaluation
+- [x] Spelling-variant analysis
+- [x] Downstream classification
+- [x] Final report
 
 ## Team
 
