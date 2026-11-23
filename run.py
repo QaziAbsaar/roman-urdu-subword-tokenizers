@@ -128,6 +128,24 @@ def classify(train_docs, train_y, test_docs, test_y, analyzer=None):
             "macro_f1": 100 * f1_score(test_y, pred, average="macro")}
 
 
+# ---------------- plots ----------------
+def plot(df, column, ylabel, filename, baseline=None):
+    fig, ax = plt.subplots(figsize=(6, 4))
+    for algo, group in df.groupby("algorithm"):
+        ax.plot(group["vocab_size"], group[column], marker="o", label=algo)
+    if baseline is not None:
+        ax.axhline(baseline, color="gray", linestyle="--", label="Word-level baseline")
+    ax.set_xscale("log")
+    ax.set_xticks(VOCAB_SIZES, [f"{v // 1000}k" for v in VOCAB_SIZES])
+    ax.set_xlabel("Vocabulary size")
+    ax.set_ylabel(ylabel)
+    ax.grid(alpha=0.3)
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(OUT / filename, dpi=150)
+    plt.close(fig)
+
+
 def main():
     OUT.mkdir(exist_ok=True)
     (OUT / "tokenizers").mkdir(exist_ok=True)
@@ -163,6 +181,11 @@ def main():
     variants.round(3).to_csv(OUT / "variants.csv", index=False)
     downstream.round(2).to_csv(OUT / "downstream.csv", index=False)
 
+    plot(metrics, "fertility", "Fertility (tokens per word)", "fertility.png")
+    plot(metrics, "continued_words", "Words split into 2+ tokens (%)", "continued_words.png")
+    plot(variants, "mean", "Variant consistency (mean Jaccard)", "variants.png")
+    plot(downstream.dropna(), "macro_f1", "Macro F1 (%)", "macro_f1.png",
+         baseline=baseline["macro_f1"])
 
     print("\nIntrinsic metrics:\n", metrics.round(3).to_string(index=False))
     print("\nVariant consistency (mean):\n",
