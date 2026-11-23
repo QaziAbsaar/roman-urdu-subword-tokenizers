@@ -1,0 +1,10 @@
+algorithm,vocab_size,accuracy,macro_f1
+BPE,1000.0,61.01,58.95
+BPE,4000.0,64.52,63.01
+BPE,8000.0,64.26,62.59
+BPE,16000.0,65.01,63.26
+WordPiece,1000.0,61.06,58.98
+WordPiece,4000.0,64.91,63.37
+WordPiece,8000.0,64.78,63.07
+WordPiece,16000.0,64.39,62.63
+Word-level,,64.78,63.13
