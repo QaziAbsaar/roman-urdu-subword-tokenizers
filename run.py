@@ -49,7 +49,6 @@ VARIANTS = {
 }
 
 
-
 # ---------------- data ----------------
 def load_data():
     if not DATA_ZIP.exists():
@@ -120,6 +119,15 @@ def variant_consistency(tok, words):
     return sum(jaccard(a, b) for a, b in pairs) / len(pairs)
 
 
+def classify(train_docs, train_y, test_docs, test_y, analyzer=None):
+    vec = TfidfVectorizer(analyzer=analyzer) if analyzer else TfidfVectorizer()
+    clf = LogisticRegression(max_iter=1000)
+    clf.fit(vec.fit_transform(train_docs), train_y)
+    pred = clf.predict(vec.transform(test_docs))
+    return {"accuracy": 100 * accuracy_score(test_y, pred),
+            "macro_f1": 100 * f1_score(test_y, pred, average="macro")}
+
+
 def main():
     OUT.mkdir(exist_ok=True)
     (OUT / "tokenizers").mkdir(exist_ok=True)
@@ -129,25 +137,37 @@ def main():
     print(f"Sentences: {len(df)} (train {len(train)}, test {len(test)})")
     print(df["label"].value_counts().to_string())
 
-    metrics, variants = [], []
+    metrics, variants, downstream = [], [], []
     for algo in ["BPE", "WordPiece"]:
         for size in VOCAB_SIZES:
             tok = train_tokenizer(algo, size, train["text"].tolist())
             tok.save(str(OUT / "tokenizers" / f"{algo.lower()}_{size}.json"))
             row = {"algorithm": algo, "vocab_size": size}
+
             metrics.append({**row, **intrinsic(tok, test["text"].tolist())})
 
             scores = {name: variant_consistency(tok, words) for name, words in VARIANTS.items()}
             variants.append({**row, **scores, "mean": sum(scores.values()) / len(scores)})
+
+            tr = [e.tokens for e in tok.encode_batch(train["text"].tolist())]
+            te = [e.tokens for e in tok.encode_batch(test["text"].tolist())]
+            downstream.append({**row, **classify(tr, train["label"], te, test["label"],
+                                                 analyzer=lambda x: x)})
             print(f"done {algo} {size}")
 
-    metrics = pd.DataFrame(metrics)
+    baseline = classify(train["text"], train["label"], test["text"], test["label"])
+    downstream.append({"algorithm": "Word-level", "vocab_size": None, **baseline})
+
+    metrics, variants, downstream = map(pd.DataFrame, (metrics, variants, downstream))
     metrics.round(3).to_csv(OUT / "metrics.csv", index=False)
-    variants = pd.DataFrame(variants)
     variants.round(3).to_csv(OUT / "variants.csv", index=False)
+    downstream.round(2).to_csv(OUT / "downstream.csv", index=False)
+
+
     print("\nIntrinsic metrics:\n", metrics.round(3).to_string(index=False))
     print("\nVariant consistency (mean):\n",
           variants[["algorithm", "vocab_size", "mean"]].round(3).to_string(index=False))
+    print("\nDownstream:\n", downstream.round(2).to_string(index=False))
 
 
 if __name__ == "__main__":
