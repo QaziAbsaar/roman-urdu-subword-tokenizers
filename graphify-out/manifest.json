@@ -1,0 +1,74 @@
+{
+  "run.py": {
+    "mtime": 1795473728.8089607,
+    "seen": 1795474057.8508613,
+    "ast_hash": "155064cf7629a871cc030c73fd407801",
+    "semantic_hash": "155064cf7629a871cc030c73fd407801"
+  },
+  "test_run.py": {
+    "mtime": 1795473515.9887574,
+    "seen": 1795474057.8508656,
+    "ast_hash": "5a5b4e7f5d11fec8a84c251e128d64e4",
+    "semantic_hash": "5a5b4e7f5d11fec8a84c251e128d64e4"
+  },
+  "README.md": {
+    "mtime": 1795476920.3576221,
+    "seen": 1795476921.0076938,
+    "ast_hash": "2bcb752fc8486d5496f74906af0eae5e",
+    "semantic_hash": ""
+  },
+  "requirements.txt": {
+    "mtime": 1795473365.342463,
+    "seen": 1795474057.8508697,
+    "ast_hash": "ee8bf98efa45cf437b621d5054ffc96b",
+    "semantic_hash": "ee8bf98efa45cf437b621d5054ffc96b"
+  },
+  "report.pdf": {
+    "mtime": 1795473869.0433288,
+    "seen": 1795474057.8508732,
+    "ast_hash": "0e80bf8f63775bbdaf251acc028b5aa6",
+    "semantic_hash": "0e80bf8f63775bbdaf251acc028b5aa6"
+  },
+  "results/continued_words.png": {
+    "mtime": 1795473823.6500063,
+    "seen": 1795474057.8508751,
+    "ast_hash": "d633d897337887dd96139c3098ec5b77",
+    "semantic_hash": "d633d897337887dd96139c3098ec5b77"
+  },
+  "results/fertility.png": {
+    "mtime": 1795473823.4530048,
+    "seen": 1795474057.8508785,
+    "ast_hash": "759e1d365d409eb80704d9bf92e51e67",
+    "semantic_hash": "759e1d365d409eb80704d9bf92e51e67"
+  },
+  "results/macro_f1.png": {
+    "mtime": 1795473824.10001,
+    "seen": 1795474057.8508809,
+    "ast_hash": "327cba8f756035797fdaec2c98930ee7",
+    "semantic_hash": "327cba8f756035797fdaec2c98930ee7"
+  },
+  "results/variants.png": {
+    "mtime": 1795473823.8460078,
+    "seen": 1795474057.8508823,
+    "ast_hash": "276c4cd59db285d9c70d7ce387efc129",
+    "semantic_hash": "276c4cd59db285d9c70d7ce387efc129"
+  },
+  "demo.py": {
+    "mtime": 1795477346.6529849,
+    "seen": 1795477359.2171757,
+    "ast_hash": "b9ce93b25f1665d2c9d6495fa4675ee4",
+    "semantic_hash": ""
+  },
+  "demo.html": {
+    "mtime": 1795477358.7801466,
+    "seen": 1795477359.217184,
+    "ast_hash": "568bb0715a6475c63de9f9bbfdf9f43c",
+    "semantic_hash": ""
+  },
+  "classifiers.py": {
+    "mtime": 1795477298.0543005,
+    "seen": 1795477336.434133,
+    "ast_hash": "2f0f3125a2ce6f459587fef4e2acf111",
+    "semantic_hash": ""
+  }
+}
