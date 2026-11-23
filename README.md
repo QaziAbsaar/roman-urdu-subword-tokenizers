@@ -105,7 +105,7 @@ python demo.py         # needs run.py results; trains 8 small classifiers (~20 s
 
 Open http://localhost:8000, type a Roman Urdu sentence and see how BPE and WordPiece cut it at each vocabulary size. The best classifier gives a positive/negative verdict (about 81% accurate) and a 3-class verdict (about 68%).
 
-Build the documents with `pdflatex proposal.tex` and `pdflatex report.tex` (run twice).
+Build the report with `pdflatex report.tex` (run twice).
 
 Note: WordPiece training in the `tokenizers` library is not fully deterministic, so WordPiece numbers can change slightly between runs. BPE results are identical on every run.
 
@@ -120,7 +120,6 @@ Note: WordPiece training in the `tokenizers` library is not fully deterministic,
 ├── demo.py / demo.html  # Interactive tokenizer demo (http://localhost:8000)
 ├── requirements.txt
 ├── results/          # metrics.csv, variants.csv, downstream.csv, plots, trained tokenizers
-├── proposal.tex/pdf  # Project proposal
 ├── report.tex/pdf    # Final report
 ├── logo_full.png     # University logo
 └── data/             # Dataset, downloaded by run.py (not committed)
